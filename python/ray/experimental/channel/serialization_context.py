@@ -85,7 +85,7 @@ class _SerializationContext:
         if tensor.device.type == "cuda":
             tensor = tensor.to("cpu")
 
-        return tensor.numpy()
+        return tensor.view(torch.uint8).numpy()
 
     def deserialize_tensor(self, val: Union["np.ndarray", int]):
         # Found a placeholder for a tensor that was serialized via NCCL.
@@ -118,4 +118,6 @@ class _SerializationContext:
         # TODO(swang): Use zero-copy from_numpy() if np_array.flags.writeable
         # is True. This is safe to set when deserializing np_array if the
         # upstream task has num_readers=1.
-        return torch.tensor(np_array, device=ctx.torch_device)
+        return torch.tensor(
+            np_array, device=ctx.torch_device, dtype=torch.float8_e4m3fn
+        )
